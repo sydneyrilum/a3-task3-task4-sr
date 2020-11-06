@@ -13,6 +13,10 @@ library(kableExtra)
 library(lubridate)
 ```
 
+## Summary
+
+In the document, I will create exploratory graphs and calculate measures of central tendency in order to compare the sizes of purple and red urchins. In addition, I will explore purple urchin counts by site and year.
+
 ### Read in the data
 
 Here, I read in the urchins data set.
@@ -25,21 +29,23 @@ urchins <- read.csv(here("data", "urchins.csv"))
 
 ### 1A: Exploratory data visualization
 
-Here, I create two graphs comparing the distribution sizes between purple and red urchins.
+Here, I create two exploratory graphs comparing the distribution sizes between purple and red urchins.
 
-Faceted histogram
+**Faceted histogram**
 ```{r}
 ggplot(data = urchins, aes(x = SIZE)) +
   geom_histogram(bins = 20) +
   facet_wrap(~COMMON_NAME) +
-  labs(x = "Urchin diameter (cm)", y = "Number of urchins")
+  labs(x = "Urchin diameter (cm)", 
+       y = "Number of urchins")
 ```
 
-Boxplot
+**Boxplot**
 ```{r}
 ggplot(data = urchins, aes(x = COMMON_NAME, y = SIZE)) +
   geom_boxplot() +
-  labs(x = "Urchin type", y = "Urchin diameter (cm)")
+  labs(y = "Urchin diameter (cm)") +
+  theme(axis.title.x = element_blank())
 ```
 
 ### 1B: Descriptive statistics table
@@ -54,19 +60,19 @@ urchins_stats <- urchins %>%
             sd = sd(SIZE),
             n = n()) 
 
-kable(urchins_stats) %>% 
+kbl(urchins_stats) %>% 
   kable_styling()
 ```
 
 ### 1C: Analysis
-***EDIT
-Looking at the faceted histogram, the spread of the red urchin diameter values appears to be larger, while the purple urchin values are more grouped/narrower spread. Both datasets appear to be normally distributed from the histogram, but the boxplot suggests slight positive skew. This potentially indicates that red urchin diameter has a larger range of values than for purple urchins. The boxplot indicates that there are a large amount of outliers for the red urchins dataset, explaining the larger data spread.
 
-The boxplot displays the red urchin median (~7 cm) to be larger than the purple uchin median (~5 cm). In addition, the red urchins have diameter obsrevations that go up to 12 cm +, while purple urchin diameter maxes out at 9 cm.
+From the histogram, it appears that both the purple and red urchin size data are normally distributed, with purple urchin sizes having a slightly narrower spread of data than red urchin size data. The boxplot indicates that the red urchin size data set has seven outliers, which could explain the wider spread of data shown in the histogram. The statistical calculations indicate that purple urchins have a smaller mean diameter of ~4.5 cm compared to red urchins, which have a mean diameter of ~6.8 cm. Both median values are close to their respective mean values, further suggesting that the both data sets are close to being symmetrically distributed. The SD of red urchin size data is slightly larger than the SD of purple urchin size, which also supports that the red urchin data has a slightly wider spread. The difference in mean urchin diameter between the species is ~2.3 cm and the percent difference is ~41%. 
+
 
 ## Section 2: Explore purple urchin counts by site and year
 
 ### 2A: Create a new subset of data
+
 Here, I create a subset of urchins data that:
 - Only includes observations for purple urchins
 - Converts the date to class “Date” 
@@ -94,7 +100,8 @@ Here, I make a summary table containing the total number of purple urchins obser
 purple_urchins_stats <- purple_urchins %>% 
   count(site_full, YEAR)
 
-purple_urchins_stats
+kbl(purple_urchins_stats) %>% 
+  kable_styling()
 ```
 
 ### 2C: Exploratory graph
@@ -102,10 +109,13 @@ purple_urchins_stats
 Here, I make an exploratory graph of counts of purple urchins recorded at each site over time for the years included in the study.
 
 ```{r}
-ggplot(data = purple_urchins_stats, aes(x = YEAR, y= n)) +
+ggplot(data = purple_urchins_stats, aes(x = YEAR, y= n, fill = site_full)) +
   geom_col() +
   facet_wrap(~site_full) +
-  theme(legend.position = "none") +
-  labs(x = "year", y = "purple urchin count")
+  labs(x = "year", 
+       y = "purple urchin count", 
+       title = "Purple urchins observed by site and year") +
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
