@@ -1,0 +1,106 @@
+---
+title: "Assignment 3- Task 4 Naples Reef Purple Urchins"
+author: "Sydney Rilum"
+date: "11/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(here)
+library(kableExtra)
+library(lubridate)
+```
+
+## Summary
+
+In this document, I will explore and visualize the mean size of purple urchins in Control and Annual sections of Naples Reef and make comparisons in my analysis. 
+
+## Read in the data
+
+Here, I read in the urchins data set.
+
+```{r}
+urchins <- read.csv(here("data", "urchins.csv"))
+```
+
+## Data Wrangling
+
+Here, I create a new subset of data to compare the mean size of purple urchins in CONTROL (no giant kelp removal) or ANNUAL (annual kelp removal) sections of Naples Reef in January 2010. 
+
+This new data set will:
+- Only contain observations for purple urchins from the Naples Reef site
+- Convert the date to class "Date"
+- Create a new column that only contains the year
+- Create a new column that only contains the month
+- Filter for observations from January 2010 only
+
+```{r}
+purple_urchins_naples <- urchins %>% 
+  filter(COMMON_NAME == "Purple Urchin", SITE == "NAPL") %>% 
+  mutate(DATE = mdy(DATE), .keep = "unused") %>% 
+  mutate(YEAR = year(DATE)) %>% 
+  mutate(MONTH = month(DATE)) %>% 
+  filter(MONTH == "1", YEAR == "2010")
+```
+
+## Exploratory data visualization
+
+Here, I create two graphs to visualize the size distribution of purple urchin data for each of the treatments (Control and Annual) to assess normality.
+
+```{r}
+# Histogram
+ggplot(data = purple_urchins_naples, aes(x = SIZE, fill = TREATMENT)) +
+  geom_histogram(bins = 15) +
+  facet_wrap(~TREATMENT) +
+  labs(x = "Purple urchin diameter (cm)", y = "Number of urchins") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# QQ-plot
+ggplot(data = purple_urchins_naples, aes(sample = SIZE)) +
+  geom_qq() +
+  facet_wrap(~TREATMENT) +
+  labs(y = "Purple urchin diameter (cm)") +
+  theme_minimal()
+```
+
+From the histogram, it appears that the mean size of purple urchins data for both Control and Annual sites could be normally distributed. However, it is not completely clear. The QQ-plot displays a close to perfectly linear trend for both data sets, suggesting that the sample observations are close to being normally distributed.
+
+## Descriptive statistics table
+
+Here, I make a summary table containing the mean, median, standard deviation, and sample size for purple urchin diameter size (cm) in the annual and control groups.
+
+```{r}
+purple_urchins_naples_stats <- purple_urchins_naples %>% 
+  group_by(TREATMENT) %>% 
+  summarize(mean = mean(SIZE),
+            median = median(SIZE),
+            standard_deviation = sd(SIZE),
+            sample_size = n()) 
+
+kbl(purple_urchins_naples_stats) %>% 
+  kable_styling()
+```
+
+## Two-sample t-test and analysis
+
+Here, I run a two-sample t-test to compare mean purple urchin size between the two treatment groups. 
+
+First I create a numeric vector data set of mean purple urchin size for Annual and Control sites. Then I use those vectors to perform a two-sample t-test.
+```{r}
+# Create vectors
+annual <- purple_urchins_naples %>%
+  filter(TREATMENT == "ANNUAL") %>%
+  pull(SIZE)
+control <- purple_urchins_naples %>%
+  filter(TREATMENT == "CONTROL") %>%
+  pull(SIZE)
+
+# Compute t-test
+t.test(annual, control)
+```
+
+The mean purple urchin diameter at the Control site (~3.73 cm) is smaller than the mean purple urchin diameter at the Annual site (~3.92 cm). Thus, the mean purple urchin size at the Annual site is ~0.19 cm larger than at the Control site, with a mean percent difference of 4.99%. The two-sample t-test reported a p-value of 0.2536, meaning that there is a 25% chance that we would have found sample means at least this different, if they were drawn from populations with the same mean.
+
